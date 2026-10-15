@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0e1014">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://openrouter.ai https://*.wikipedia.org; img-src data:; base-uri 'none'; form-action 'none'">
+<title>Character Chat</title>
+<style>
+:root{--bg:#0e1014;--s1:#161a21;--s2:#1e232d;--s3:#2a303c;--tx:#e8eaf0;--mu:#8b93a3;--ac:#8b7cf6;--ac2:#6d5ce0;--rd:#f26d6d;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI","Noto Sans Thai","Sarabun",sans-serif}
+a{color:var(--ac)}
+.view{display:none;flex-direction:column;height:100vh;height:100dvh;max-width:720px;margin:0 auto;padding-top:env(safe-area-inset-top)}
+.view.on{display:flex}
+.bar{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--s2)}
+.bar h1{font-size:18px;margin:0;font-weight:600}
+.spacer{flex:1}
+.icon{background:none;border:0;color:var(--tx);font-size:20px;padding:8px 10px;border-radius:10px;cursor:pointer}
+.icon:active{background:var(--s2)}
+.scroll{flex:1;overflow-y:auto;padding:14px 14px calc(28px + env(safe-area-inset-bottom))}
+.btn{background:var(--s2);color:var(--tx);border:1px solid var(--s3);padding:12px 16px;border-radius:12px;font-size:16px;font-family:inherit;cursor:pointer}
+.btn:active{filter:brightness(1.2)}
+.btn.primary{background:var(--ac2);border-color:var(--ac2);color:#fff}
+.btn.danger{background:#7a2b2b;border-color:#a33;color:#fff}
+.btn.block{display:block;width:100%;margin-top:12px}
+.link{background:none;border:0;color:var(--mu);font-size:14px;text-decoration:underline;cursor:pointer;margin-top:14px;font-family:inherit}
+input,textarea,select{width:100%;background:var(--s1);color:var(--tx);border:1px solid var(--s3);border-radius:12px;padding:12px 14px;font-size:16px;font-family:inherit;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--ac)}
+input[type=range]{padding:0;accent-color:var(--ac)}
+input[type=checkbox]{width:auto}
+textarea{resize:vertical}
+label.f{display:block;margin:16px 0 6px;font-size:14px;color:var(--mu)}
+.hint{font-size:13px;color:var(--mu);margin:6px 2px 0}
+.muted{color:var(--mu)}.sm{font-size:13px}.center{text-align:center}
+.banner{background:#2a2540;border:1px solid var(--ac2);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.card{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:var(--s1);border:1px solid var(--s2);color:var(--tx);border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer;font-family:inherit}
+.card:active{background:var(--s2)}
+.ct{min-width:0;flex:1}.nm{font-weight:600}
+.pv{color:var(--mu);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.av{width:32px;height:32px;border-radius:50%;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
+.av.big{width:48px;height:48px;font-size:26px}
+.av{overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.avrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.avrow .btn{padding:10px 14px;font-size:15px}
+.altbar{display:flex;gap:6px;align-items:center;margin:6px 0 0 40px}
+.altbar .n{font-size:13px;color:var(--mu);min-width:34px;text-align:center}
+.mini[disabled]{opacity:.35}
+.cnt{font-size:12px;color:var(--mu);text-align:right;margin-top:2px}
+.cnt.bad{color:var(--rd)}
+.row.flow.me,.row.flow.bot{align-items:stretch}
+.row.flow{margin:6px 0;padding:10px 12px;border-radius:14px}
+.row.flow.me{background:var(--s1)}
+.row.flow .who{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.row.flow .who .av{width:26px;height:26px;font-size:15px}
+.row.flow .who .nm{font-weight:600;font-size:14px}
+.row.flow .bubble{max-width:100%;background:none;padding:0;border-radius:0}
+.row.flow .bubble em{color:#c9c3fb}
+.row.flow .acts,.row.flow .altbar{margin-left:0}
+.ooc{color:var(--mu);font-size:.92em}
+.tools{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 0;scrollbar-width:none}
+.tools::-webkit-scrollbar{display:none}
+.chip{flex:none;background:var(--s2);border:1px solid var(--s3);color:var(--tx);border-radius:999px;padding:5px 12px;font-size:14px;font-family:inherit;cursor:pointer;white-space:nowrap}
+.chip:active{background:var(--s3)}
+.guide h4{margin:16px 0 6px;color:var(--ac);font-size:15px}
+.guide ul{margin:0 0 8px;padding-left:20px}
+.guide li{margin:4px 0;font-size:15px}
+.guide code{background:var(--s2);padding:1px 6px;border-radius:6px;font-size:14px}
+.lockbox{margin:auto;width:100%;max-width:360px;padding:24px;display:flex;flex-direction:column;gap:10px;text-align:center}
+.lockbox .logo{font-size:44px}.lockbox h1{margin:0;font-size:22px}.lockbox p{margin:0 0 6px;font-size:14px}
+.err{color:var(--rd);font-size:14px;min-height:20px}
+#msgs{flex:1;overflow-y:auto;padding:10px 12px}
+.row{margin:10px 0;display:flex;flex-direction:column}
+.row.me{align-items:flex-end}.row.bot{align-items:flex-start}
+.line{display:flex;gap:8px;align-items:flex-end;max-width:100%}
+.bubble{max-width:86%;padding:10px 14px;border-radius:18px;overflow-wrap:anywhere;cursor:pointer}
+.bot .bubble{background:var(--s2);border-bottom-left-radius:6px}
+.me .bubble{background:var(--ac2);border-bottom-right-radius:6px}
+.bubble em{color:#c9c3fb}.me .bubble em{color:#ece9ff}
+.acts{display:none;flex-wrap:wrap;gap:6px;margin-top:6px}
+.bot .acts{margin-left:40px}
+.row.sel .acts{display:flex}
+.mini{background:var(--s1);color:var(--tx);border:1px solid var(--s3);border-radius:999px;padding:5px 12px;font-size:13px;font-family:inherit;cursor:pointer}
+.more{display:block;margin:6px auto 12px;padding:8px 14px;font-size:14px}
+.cursor{display:inline-block;width:8px;height:16px;background:var(--ac);margin-left:2px;vertical-align:-2px;animation:bl 1s steps(2) infinite}
+@keyframes bl{50%{opacity:0}}
+#chatErr{padding:0 12px}
+.errbox{background:#3a1f22;border:1px solid #7a2b2b;color:#ffb4b4;border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:6px}
+.errbox button{margin-top:8px}
+.inbar{display:flex;gap:8px;align-items:flex-end;padding:8px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--s2);background:var(--bg)}
+.inbar textarea{resize:none;max-height:140px;border-radius:20px;padding:10px 16px}
+.send{width:46px;height:46px;border-radius:50%;border:0;background:var(--ac2);color:#fff;font-size:20px;flex:none;cursor:pointer}
+.send.stop{background:var(--rd)}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+#modal[hidden]{display:none}
+.sheet{background:var(--s1);width:100%;max-width:720px;max-height:88vh;max-height:88dvh;overflow-y:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.sheet h3{margin:0 0 12px}.sheet p{margin:0 0 12px}
+.btnrow{display:flex;gap:10px;margin-top:14px}.btnrow .btn{flex:1}
+.menu .btn{display:block;width:100%;margin-bottom:8px;text-align:left}
+.row2{display:flex;gap:10px;align-items:center;margin:10px 0}
+.row2 select{width:auto;flex:none}
+.chk{display:flex;gap:6px;align-items:center;white-space:nowrap;font-size:14px}
+.mlist{margin-top:8px}
+.mi-btn{display:block;width:100%;text-align:left;background:var(--s2);border:1px solid var(--s3);color:var(--tx);border-radius:12px;padding:10px 12px;margin-bottom:8px;font-family:inherit;cursor:pointer}
+.mi-btn .a{font-weight:600}.mi-btn .b{font-size:12px;color:var(--mu);overflow-wrap:anywhere}.mi-btn .c{font-size:13px;color:#b8b0ff;margin-top:2px}
+.sec{margin:26px 0 4px;font-size:13px;color:var(--ac);font-weight:600;letter-spacing:.04em}
+.stack .btn{display:block;width:100%;margin-top:8px;text-align:left}
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2b3040;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;max-width:90%;z-index:99;opacity:0;pointer-events:none;transition:opacity .2s;text-align:center}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<input id="imgPick" type="file" accept="image/*" hidden>
+<div id="modal" hidden><div class="sheet" id="sheet"></div></div>
+
+<section class="view" id="v-lock">
+  <div class="lockbox">
+    <div class="logo">🔒</div>
+    <h1 id="lockTitle">Character Chat</h1>
+    <p id="lockSub" class="muted"></p>
+    <input id="pw1" type="password" placeholder="รหัสผ่าน">
+    <input id="pw2" type="password" placeholder="ยืนยันรหัสผ่านอีกครั้ง" hidden>
+    <button id="lockBtn" class="btn primary">ปลดล็อก</button>
+    <div id="lockErr" class="err"></div>
+    <button id="forgot" class="link" hidden>ลืมรหัสผ่าน? ล้างทุกอย่างแล้วเริ่มใหม่</button>
+  </div>
+</section>
+
+<section class="view" id="v-home">
+  <header class="bar"><h1>ตัวละครของฉัน</h1><div class="spacer"></div>
+    <button class="icon" id="hGuide" aria-label="คู่มือ">📖</button>
+    <button class="icon" id="hLock" aria-label="ล็อก">🔒</button>
+    <button class="icon" id="hSet" aria-label="ตั้งค่า">⚙️</button></header>
+  <div class="scroll">
+    <div id="keyBanner" class="banner" hidden>ยังไม่ได้ตั้งค่า API key และโมเดล <a href="#settings">ไปตั้งค่า</a></div>
+    <div id="list"></div>
+    <button id="newChar" class="btn primary block">+ สร้างตัวละครใหม่</button>
+  </div>
+</section>
+
+<section class="view" id="v-editor">
+  <header class="bar"><button class="icon" id="eBack" aria-label="กลับ">←</button><h1 id="eTitle">ตัวละครใหม่</h1></header>
+  <div class="scroll">
+    <label class="f">ชื่อ</label><input id="eName" maxlength="40" placeholder="เช่น มินะ">
+    <label class="f">รูปโปรไฟล์</label>
+    <div class="avrow"><div class="av big" id="eAvPrev"></div><button class="btn" id="eAvPick" type="button">เลือกรูป</button><button class="btn" id="eAvDel" type="button">ลบรูป</button></div>
+    <div class="hint">รูปจะถูกย่อและเก็บในเครื่องคุณเท่านั้น ถ้าไม่ใส่รูปจะใช้อีโมจิแทน</div>
+    <label class="f">อีโมจิ (ใช้เมื่อไม่มีรูป)</label><input id="eEmoji" maxlength="8" placeholder="🙂">
+    <label class="f">นิสัยและข้อมูลตัวละคร</label>
+    <textarea id="ePersona" rows="7" placeholder="เช่น เพื่อนสนิทที่ใจดี ขี้เล่น พูดสบายๆ ชอบฟังเรื่องของ {{user}} …"></textarea>
+    <div class="hint">เขียนเป็นภาษาไทยได้เลย ใส่ {{user}} แทนชื่อคุณ และ {{char}} แทนชื่อตัวละคร</div>
+    <label class="f">ตัวอย่างบทพูด (ไม่บังคับ)</label>
+    <textarea id="eSample" rows="4" placeholder="ตัวอย่างประโยคที่ตัวละครจะพูด เพื่อให้ได้น้ำเสียงตรงใจ"></textarea>
+    <label class="f">ข้อความทักทายแรก</label>
+    <textarea id="eGreet" rows="3" placeholder="*ยิ้มกว้าง* เฮ้ มาแล้วเหรอ"></textarea>
+    <div class="hint">ใช้ *ดอกจัน* ครอบข้อความเพื่อทำเป็นตัวเอียงสำหรับท่าทาง</div>
+    <label class="f">บทบาทของฉันในเรื่องนี้ (ไม่บังคับ)</label>
+    <textarea id="eRole" rows="2" placeholder="เช่น เป็นรุ่นน้องที่มินะแอบเอ็นดู"></textarea>
+    <label class="f">ข้อมูลอ้างอิง (ไม่บังคับ)</label>
+    <textarea id="eRef" rows="7" placeholder="ข้อมูลจากต้นฉบับ เช่น ประวัติ ความสัมพันธ์ เหตุการณ์สำคัญ"></textarea>
+    <div class="cnt" id="eRefCnt"></div>
+    <div class="stack"><button class="btn" id="eWiki" type="button">📚 ดึงข้อมูลจาก Wikipedia</button></div>
+    <div class="hint">ข้อมูลอ้างอิงถูกส่งให้ AI ทุกข้อความ ยิ่งยาวยิ่งใช้โทเคน (เสียเงิน) มากขึ้น แนะนำไม่เกินประมาณ 3,000 ตัวอักษร</div>
+    <button id="eSave" class="btn primary block">บันทึก</button>
+    <button id="eDel" class="btn danger block" hidden>ลบตัวละครนี้</button>
+  </div>
+</section>
+
+<section class="view" id="v-chat">
+  <header class="bar"><button class="icon" id="cBack" aria-label="กลับ">←</button>
+    <div class="av" id="cAv"></div><h1 id="cName"></h1><div class="spacer"></div>
+    <button class="icon" id="cMenu" aria-label="เมนู">⋯</button></header>
+  <div id="msgs"></div>
+  <div id="chatErr"></div>
+  <div class="tools" id="tools"></div>
+  <div class="inbar">
+    <textarea id="ci" rows="1" placeholder="พิมพ์ข้อความ..."></textarea>
+    <button class="send" id="cSend" aria-label="ส่ง">➤</button>
+  </div>
+</section>
+
+<section class="view" id="v-settings">
+  <header class="bar"><button class="icon" id="sBack" aria-label="กลับ">←</button><h1>ตั้งค่า</h1></header>
+  <div class="scroll">
+    <div class="stack"><button class="btn" id="sGuide" type="button">📖 คู่มือการใช้งาน</button></div>
+    <div class="sec">การเชื่อมต่อ AI</div>
+    <label class="f">OpenRouter API key</label>
+    <input id="sKey" type="password" autocomplete="off" placeholder="sk-or-...">
+    <div class="hint">สร้างได้ที่ <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer">openrouter.ai/keys</a> และเติมเครดิตที่ <a href="https://openrouter.ai/credits" target="_blank" rel="noopener noreferrer">openrouter.ai/credits</a> คีย์ถูกเก็บแบบเข้ารหัสในเครื่องนี้เท่านั้น</div>
+    <div class="stack"><button class="btn" id="sTest">ทดสอบคีย์</button></div>
+    <label class="f">โมเดล</label>
+    <input id="sModel" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="เช่น anthropic/claude-sonnet-...">
+    <div class="stack"><button class="btn" id="sPick">เลือกจากรายการ (ดูราคา/ค้นหา)</button></div>
+    <div class="hint">ตั้งค่า Privacy ในบัญชี OpenRouter เองได้ว่าอนุญาตให้ผู้ให้บริการเก็บข้อความหรือไม่ โมเดลฟรีบางตัวอาจเก็บข้อความไปพัฒนาโมเดล</div>
+
+    <div class="sec">โปรไฟล์ของฉัน</div>
+    <div class="avrow"><div class="av big" id="sAvPrev"></div><button class="btn" id="sAvPick" type="button">เลือกรูป</button><button class="btn" id="sAvDel" type="button">ลบรูป</button></div>
+    <label class="f">ชื่อที่ให้ตัวละครเรียกคุณ</label><input id="sName" maxlength="40" placeholder="ไม่ใส่ก็ได้">
+    <label class="f">บุคลิกและประวัติของฉัน</label>
+    <textarea id="sDesc" rows="5" placeholder="เช่น อายุ 25 ทำงานออฟฟิศ ชอบอ่านนิยาย ขี้เกรงใจ ..."></textarea>
+    <div class="hint">ข้อมูลนี้ถูกส่งให้ตัวละครทุกตัว เพื่อให้รู้ว่าคุณเป็นใคร</div>
+
+    <div class="sec">การแชท</div>
+    <label class="f">ภาษาที่ตัวละครใช้ตอบ</label>
+    <select id="sLang"><option value="en">English (เป็นหลัก)</option><option value="auto">ตามที่ฉันพิมพ์</option><option value="th">ไทย</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="zh">中文</option></select>
+    <label class="f">รูปแบบการแสดงข้อความ</label>
+    <select id="sLayout"><option value="flow">แบบอ่านต่อเนื่อง ชิดซ้าย (แนะนำ)</option><option value="bubble">แบบแชท ซ้าย-ขวา</option></select>
+        <label class="f">ความสร้างสรรค์ (<span id="sTempV"></span>)</label><input id="sTemp" type="range" min="0" max="1.5" step="0.05">
+    <label class="f">ความยาวคำตอบสูงสุด</label>
+    <select id="sMax"><option value="300">สั้น (300 โทเคน)</option><option value="600">ปานกลาง (600)</option><option value="1000">ยาว (1000)</option><option value="2000">ยาวมาก (2000)</option></select>
+    <label class="f">จำข้อความล่าสุดกี่ข้อความ (ยิ่งเยอะยิ่งแพง)</label>
+    <select id="sCtx"><option value="10">10</option><option value="20">20</option><option value="30">30</option><option value="50">50</option><option value="80">80</option><option value="120">120</option></select>
+    <div class="hint">ประวัติแชทเก็บทั้งหมดในเครื่อง แต่ส่งให้ AI เฉพาะข้อความล่าสุดตามจำนวนนี้</div>
+
+    <div class="sec">ความเป็นส่วนตัว</div>
+    <label class="f">ล็อกอัตโนมัติเมื่อไม่ได้ใช้งาน</label>
+    <select id="sLock"><option value="0">ไม่ล็อก</option><option value="2">2 นาที</option><option value="5">5 นาที</option><option value="10">10 นาที</option><option value="30">30 นาที</option><option value="60">1 ชั่วโมง</option></select>
+    <div class="stack">
+      <button class="btn" id="sLockNow">🔒 ล็อกตอนนี้</button>
+      <button class="btn" id="sChPw">เปลี่ยนรหัสผ่าน</button>
+      <button class="btn" id="sBackup">สำรองข้อมูล (ไฟล์เข้ารหัส)</button>
+      <button class="btn" id="sRestore">กู้คืนจากไฟล์สำรอง</button>
+      <input id="sFile" type="file" accept=".json,application/json" hidden>
+    </div>
+    <div class="hint">พื้นที่ที่ใช้: <span id="sStore"></span></div>
+
+    <div class="sec">ล้างข้อมูล</div>
+    <div class="stack">
+      <button class="btn" id="sClearChats">ล้างประวัติแชททุกตัวละคร</button>
+      <button class="btn danger" id="sWipe">ลบข้อมูลทั้งหมดถาวร</button>
+    </div>
+    <p class="hint">ถ้าลืมรหัสผ่าน จะกู้ข้อมูลไม่ได้ (เพื่อความปลอดภัย) ควรสำรองข้อมูลไว้เป็นระยะ</p>
+  </div>
+</section>
+
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s);
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!==undefined)e.innerHTML=h;return e;};
+const enc=new TextEncoder(),dec=new TextDecoder();
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36);
+const VAULT='cc_vault_v1',ITER=310000;
+let state=null,key=null,salt=null,iter=ITER,lastActive=Date.now(),streaming=null,fails=0,autoStick=true,msgLimit=100,models=null,curId=null,editId=null;
+
+/* ---------- helpers ---------- */
+let tt;function toast(m,ms=3000){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),ms);}
+function toB64(buf){const a=new Uint8Array(buf);let s='';for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000));return btoa(s);}
+function fromB64(str){const s=atob(str),a=new Uint8Array(s.length);for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a;}
+function render(t){return esc(t).replace(/\(\(([^\n]+?)\)\)/g,'<span class="ooc">(($1))</span>').replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>').replace(/\*([^*\n]+)\*/g,'<em>$1</em>').replace(/\n/g,'<br>');}
+const plain=t=>String(t).replace(/\*+/g,'').replace(/\s+/g,' ').trim();
+const avOK=a=>typeof a==='string'&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(a);
+const avHTML=c=>avOK(c.avatar)?'<img alt="" src="'+c.avatar+'">':esc(c.emoji);
+function readDataURL(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);});}
+async function toAvatar(f){
+  if(f.size>20e6)throw new Error('big');
+  const src=await readDataURL(f);
+  const img=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=src;});
+  const S=256,cv=document.createElement('canvas');cv.width=cv.height=S;
+  const x=cv.getContext('2d'),m=Math.min(img.width,img.height),sx=(img.width-m)/2,sy=(img.height-m)/2;
+  x.fillStyle='#2a303c';x.fillRect(0,0,S,S);x.drawImage(img,sx,sy,m,m,0,0,S,S);
+  return cv.toDataURL('image/jpeg',0.82);
+}
+let imgCb=null;
+function pickImage(cb){imgCb=cb;$('#imgPick').click();}
+$('#imgPick').addEventListener('change',async e=>{
+  const f=e.target.files[0];e.target.value='';const cb=imgCb;imgCb=null;if(!f||!cb)return;
+  try{cb(await toAvatar(f));}catch{toast('ใช้รูปนี้ไม่ได้ ลองรูปอื่น');}
+});
+const fill=(t,c)=>String(t||'').replace(/\{\{user\}\}/gi,(state&&state.settings.userName)||'คุณ').replace(/\{\{char\}\}/gi,c.name);
+function firstGlyph(s){s=s.trim();try{const g=new Intl.Segmenter(undefined,{granularity:'grapheme'});for(const x of g.segment(s))return x.segment;return '';}catch{return Array.from(s)[0]||'';}}
+function debounce(f,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>f(...a),ms);};}
+function show(n){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+n));}
+function go(h){location.hash=h;}
+function goReplace(h){location.replace(h||'#');}
+
+/* ---------- modal ---------- */
+let sheetCancel=null;
+function openSheet(html,cancel){$('#sheet').innerHTML=html;$('#modal').hidden=false;sheetCancel=cancel||null;}
+function closeSheet(){$('#modal').hidden=true;$('#sheet').innerHTML='';sheetCancel=null;}
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal'){const c=sheetCancel;closeSheet();if(c)c();}});
+function confirmBox(msg,ok='ตกลง',danger=false){return new Promise(res=>{
+  openSheet('<p>'+esc(msg)+'</p><div class="btnrow"><button class="btn" id="cNo">ยกเลิก</button><button class="btn '+(danger?'danger':'primary')+'" id="cYes">'+esc(ok)+'</button></div>',()=>res(false));
+  $('#cNo').onclick=()=>{closeSheet();res(false);};$('#cYes').onclick=()=>{closeSheet();res(true);};});}
+function askText(title,initial,opt){opt=opt||{};return new Promise(res=>{
+  const f=opt.password?'<input id="aIn" type="password" autocomplete="off">':'<textarea id="aIn" rows="'+(opt.rows||6)+'"></textarea>';
+  openSheet('<h3>'+esc(title)+'</h3>'+f+'<div class="btnrow"><button class="btn" id="aNo">ยกเลิก</button><button class="btn primary" id="aOk">ตกลง</button></div>',()=>res(null));
+  const i=$('#aIn');i.value=initial||'';setTimeout(()=>i.focus(),60);
+  $('#aNo').onclick=()=>{closeSheet();res(null);};$('#aOk').onclick=()=>{const v=i.value;closeSheet();res(v);};});}
+
+/* ---------- crypto / storage ---------- */
+async function derive(pw,saltBytes,it){
+  const base=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt:saltBytes,iterations:it,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function seal(obj){
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(obj)));
+  return {v:1,iter,salt:toB64(salt),iv:toB64(iv),data:toB64(ct)};
+}
+async function openVault(v,k){
+  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:fromB64(v.iv)},k,fromB64(v.data));
+  return JSON.parse(dec.decode(pt));
+}
+const stored=()=>{try{return JSON.parse(localStorage.getItem(VAULT)||'null');}catch{return null;}};
+let saveChain=Promise.resolve();
+function save(){
+  saveChain=saveChain.then(async()=>{
+    if(!state||!key)return;
+    try{localStorage.setItem(VAULT,JSON.stringify(await seal(state)));}
+    catch(e){toast(e&&e.name==='QuotaExceededError'?'พื้นที่เก็บเต็ม ลองล้างแชทเก่าหรือสำรองข้อมูล':'บันทึกไม่สำเร็จ',5000);}
+  });
+  return saveChain;
+}
+const dsave=debounce(save,400);
+const defaults=()=>({v:1,settings:{apiKey:'',model:'',temperature:0.9,maxTokens:600,context:30,autoLock:10,userName:'',userAvatar:'',userDesc:'',replyLang:'en',layout:'flow'},characters:[]});
+function normalize(st){const d=defaults();const o={v:1,settings:Object.assign(d.settings,(st&&st.settings)||{}),characters:Array.isArray(st&&st.characters)?st.characters:[]};
+  o.characters.forEach(c=>{c.messages=Array.isArray(c.messages)?c.messages:[];c.emoji=c.emoji||'🙂';c.persona=c.persona||'';});return o;}
+function seedSample(){
+  state.characters.push({id:uid(),name:'มินะ',emoji:'🌙',persona:'เพื่อนสนิทที่ใจดี อบอุ่น ขี้เล่นนิดๆ ชอบฟังเรื่องราวของ {{user}} พูดสบายๆ เหมือนเพื่อนคุยกัน ใช้ภาษาไทยธรรมชาติ ไม่เป็นทางการ ให้กำลังใจเป็น แต่ไม่ยัดเยียดคำแนะนำ',sample:'',greeting:'*โบกมือทักทาย* เฮ้ ว่าไง วันนี้เป็นไงบ้าง? เล่าให้ฟังได้เลยนะ',messages:[{role:'assistant',content:'*โบกมือทักทาย* เฮ้ ว่าไง วันนี้เป็นไงบ้าง? เล่าให้ฟังได้เลยนะ'}]});
+}
+
+/* ---------- lock screen ---------- */
+function showLock(){
+  const setup=!stored();
+  $('#lockTitle').textContent=setup?'ตั้งรหัสผ่านของคุณ':'ปลดล็อก';
+  $('#lockSub').textContent=setup?'รหัสผ่านนี้ใช้เข้ารหัสแชทและ API key ในเครื่องคุณ ยิ่งยาวยิ่งปลอดภัย ถ้าลืมจะกู้คืนไม่ได้':'ใส่รหัสผ่านเพื่อเข้าใช้งาน';
+  $('#pw1').value='';$('#pw2').value='';$('#pw2').hidden=!setup;
+  $('#pw1').autocomplete=setup?'new-password':'current-password';$('#pw2').autocomplete='new-password';
+  $('#lockBtn').textContent=setup?'ตั้งรหัสผ่านและเริ่มใช้งาน':'ปลดล็อก';
+  $('#forgot').hidden=setup;$('#lockErr').textContent='';
+  show('lock');
+}
+function wipeDom(){document.querySelectorAll('input:not(#pw1):not(#pw2),textarea').forEach(i=>{try{i.value='';}catch{}});$('#msgs').innerHTML='';$('#list').innerHTML='';$('#chatErr').innerHTML='';closeSheet();}
+async function lock(){
+  if(!state)return;
+  if(streaming){stopStream();await sleep(150);}
+  await saveChain;
+  state=null;key=null;salt=null;curId=null;models=null;
+  wipeDom();showLock();
+}
+let busyLock=false;
+async function doUnlock(){
+  if(busyLock)return;
+  const pw=$('#pw1').value,err=m=>$('#lockErr').textContent=m,v=stored();err('');
+  if(!window.crypto||!crypto.subtle){err('เบราว์เซอร์นี้ไม่รองรับการเข้ารหัส (ต้องเปิดผ่านลิงก์ https)');return;}
+  busyLock=true;$('#lockBtn').disabled=true;
+  try{
+    if(!v){
+      if(pw.length<6){err('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร');return;}
+      if(pw!==$('#pw2').value){err('รหัสผ่านสองช่องไม่ตรงกัน');return;}
+      salt=crypto.getRandomValues(new Uint8Array(16));iter=ITER;key=await derive(pw,salt,iter);
+      state=defaults();seedSample();await save();enterApp();
+    }else{
+      try{
+        const s=fromB64(v.salt),it=v.iter||ITER,k=await derive(pw,s,it),st=await openVault(v,k);
+        salt=s;iter=it;key=k;state=normalize(st);fails=0;enterApp();
+      }catch{fails++;err('รหัสผ่านไม่ถูกต้อง');await sleep(Math.min(fails*700,5000));}
+    }
+  }finally{busyLock=false;$('#lockBtn').disabled=false;}
+}
+$('#lockBtn').onclick=doUnlock;
+['#pw1','#pw2'].forEach(s=>$(s).addEventListener('keydown',e=>{if(e.key==='Enter')doUnlock();}));
+$('#forgot').onclick=async()=>{
+  if(!await confirmBox('ลบข้อมูลทั้งหมดในเครื่องนี้ (ตัวละคร แชท API key) แล้วเริ่มใหม่? กู้คืนไม่ได้ ยกเว้นมีไฟล์สำรอง','ลบและเริ่มใหม่',true))return;
+  localStorage.removeItem(VAULT);showLock();
+};
+function enterApp(){$('#pw1').value='';$('#pw2').value='';lastActive=Date.now();route();}
+
+/* ---------- auto lock ---------- */
+const touch=()=>{lastActive=Date.now();};
+['pointerdown','keydown','touchstart','scroll'].forEach(e=>addEventListener(e,touch,{passive:true,capture:true}));
+function checkIdle(){if(!state)return;const m=Number(state.settings.autoLock)||0;if(m>0&&!streaming&&Date.now()-lastActive>m*60000)lock();}
+setInterval(checkIdle,10000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkIdle();});
+
+/* ---------- router ---------- */
+function route(){
+  if(!state){showLock();return;}
+  const [p,id]=location.hash.slice(1).split('/');
+  if(streaming&&!(p==='chat'&&id===streaming.cid))stopStream();
+  if(p==='settings')viewSettings();
+  else if(p==='new')viewEditor(null);
+  else if(p==='edit')viewEditor(id);
+  else if(p==='chat')viewChat(id);
+  else viewHome();
+}
+addEventListener('hashchange',route);
+
+/* ---------- home ---------- */
+function viewHome(){
+  show('home');const s=state.settings;$('#keyBanner').hidden=!!(s.apiKey&&s.model);
+  const L=$('#list');L.innerHTML='';
+  if(!state.characters.length)L.appendChild(el('p','muted center','ยังไม่มีตัวละคร กดปุ่มด้านล่างเพื่อสร้าง'));
+  state.characters.forEach(c=>{
+    const last=c.messages[c.messages.length-1];
+    const b=el('button','card','<div class="av big">'+avHTML(c)+'</div><div class="ct"><div class="nm">'+esc(c.name)+'</div><div class="pv">'+esc(last?plain(last.content).slice(0,70):'ยังไม่ได้เริ่มคุย')+'</div></div>');
+    b.onclick=()=>go('#chat/'+c.id);L.appendChild(b);
+  });
+}
+$('#hLock').onclick=lock;$('#hSet').onclick=()=>go('#settings');$('#newChar').onclick=()=>go('#new');
+
+/* ---------- editor ---------- */
+function viewEditor(id){
+  editId=id;const c=id?state.characters.find(x=>x.id===id):null;
+  if(id&&!c){goReplace('#');return;}
+  $('#eTitle').textContent=c?'แก้ไขตัวละคร':'ตัวละครใหม่';
+  $('#eName').value=c?c.name:'';$('#eEmoji').value=c?c.emoji:'🙂';$('#ePersona').value=c?c.persona:'';
+  $('#eSample').value=c?(c.sample||''):'';$('#eGreet').value=c?(c.greeting||''):'';
+  $('#eRole').value=c?(c.userRole||''):'';$('#eRef').value=c?(c.ref||''):'';
+  editAvatar=c&&avOK(c.avatar)?c.avatar:'';updEdAv();updRefCnt();
+  $('#eDel').hidden=!c;show('editor');
+}
+const editorBack=()=>goReplace(editId?'#chat/'+editId:'#');
+let editAvatar='';
+function updEdAv(){$('#eAvPrev').innerHTML=avOK(editAvatar)?'<img alt="" src="'+editAvatar+'">':esc(firstGlyph($('#eEmoji').value)||'🙂');}
+function updRefCnt(){const n=$('#eRef').value.length,e=$('#eRefCnt');e.textContent=n?n.toLocaleString()+' ตัวอักษร':'';e.classList.toggle('bad',n>6000);}
+$('#eAvPick').onclick=()=>pickImage(d=>{editAvatar=d;updEdAv();});
+$('#eAvDel').onclick=()=>{editAvatar='';updEdAv();};
+$('#eEmoji').addEventListener('input',updEdAv);
+$('#eRef').addEventListener('input',updRefCnt);
+$('#eWiki').onclick=openWiki;
+async function openWiki(){
+  openSheet('<h3>ดึงข้อมูลจาก Wikipedia</h3><div class="row2"><select id="wl"><option value="th">ไทย</option><option value="en">English</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="zh">中文</option></select><input id="wq" type="search" placeholder="ชื่อเรื่อง/ตัวละคร/หัวข้อ"></div><div class="stack"><button class="btn primary" id="wgo" type="button">ค้นหา</button></div><p class="hint">คำค้นจะถูกส่งไปที่ Wikipedia ผลลัพธ์จะถูกเติมลงช่องข้อมูลอ้างอิง คุณแก้ไขต่อได้</p><div id="wres" class="mlist"></div><button class="btn block" id="wclose" type="button">ปิด</button>');
+  $('#wclose').onclick=closeSheet;
+  const go=async()=>{
+    const q=$('#wq').value.trim(),R=$('#wres');if(!q||!R)return;const lang=$('#wl').value;R.textContent='กำลังค้นหา...';
+    try{
+      const u='https://'+lang+'.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrlimit=6&prop=extracts&exintro=1&explaintext=1&exlimit=max&exchars=200&gsrsearch='+encodeURIComponent(q);
+      const r=await fetch(u);if(!r.ok)throw 0;const j=await r.json();
+      const pages=Object.values((j.query&&j.query.pages)||{}).sort((a,b)=>a.index-b.index);
+      const R2=$('#wres');if(!R2)return;R2.innerHTML='';
+      if(!pages.length){R2.textContent='ไม่พบผลลัพธ์ ลองคำอื่นหรือเปลี่ยนภาษา';return;}
+      pages.forEach(p=>{
+        const b=el('button','mi-btn','<div class="a">'+esc(p.title)+'</div><div class="b">'+esc((p.extract||'').slice(0,160))+'</div>');
+        b.onclick=()=>pickWiki(lang,p.title);R2.appendChild(b);
+      });
+    }catch{const R3=$('#wres');if(R3)R3.textContent='ค้นหาไม่สำเร็จ เช็กอินเทอร์เน็ตแล้วลองใหม่';}
+  };
+  $('#wgo').onclick=go;$('#wq').addEventListener('keydown',e=>{if(e.key==='Enter')go();});
+  setTimeout(()=>{const i=$('#wq');if(i)i.focus();},60);
+}
+async function pickWiki(lang,title){
+  const R=$('#wres');if(!R)return;R.textContent='กำลังดึงข้อมูล...';
+  try{
+    const u='https://'+lang+'.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&prop=extracts&explaintext=1&exsectionformat=plain&titles='+encodeURIComponent(title);
+    const r=await fetch(u);if(!r.ok)throw 0;const j=await r.json();
+    const p=Object.values((j.query&&j.query.pages)||{})[0];let t=((p&&p.extract)||'').trim();
+    if(!t){const R2=$('#wres');if(R2)R2.textContent='หน้านี้ไม่มีเนื้อหาให้ดึง ลองหน้าอื่น';return;}
+    const LIM=4000;let cut=false;
+    if(t.length>LIM){t=t.slice(0,LIM);const k=t.lastIndexOf('\n');if(k>LIM*0.6)t=t.slice(0,k);cut=true;}
+    const ta=$('#eRef');ta.value=(ta.value.trim()?ta.value.trim()+'\n\n':'')+'['+title+' - Wikipedia]\n'+t.replace(/\n{3,}/g,'\n\n');
+    updRefCnt();closeSheet();toast(cut?'ดึงมาแล้ว (ตัดให้ไม่เกิน 4,000 ตัวอักษร) แก้ไขต่อได้':'ดึงข้อมูลแล้ว แก้ไขต่อได้',4500);
+  }catch{const R3=$('#wres');if(R3)R3.textContent='ดึงข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง';}
+}
+$('#eBack').onclick=editorBack;
+$('#eSave').onclick=async()=>{
+  const name=$('#eName').value.trim();if(!name){toast('ใส่ชื่อตัวละครก่อน');return;}
+  const f={name,emoji:firstGlyph($('#eEmoji').value)||'🙂',avatar:editAvatar,persona:$('#ePersona').value.trim(),sample:$('#eSample').value.trim(),greeting:$('#eGreet').value.trim(),userRole:$('#eRole').value.trim(),ref:$('#eRef').value.trim()};
+  if(editId){Object.assign(state.characters.find(x=>x.id===editId),f);await save();goReplace('#chat/'+editId);}
+  else{const c=Object.assign({id:uid(),messages:[]},f);if(f.greeting)c.messages.push({role:'assistant',content:fill(f.greeting,c)});state.characters.push(c);await save();goReplace('#chat/'+c.id);}
+};
+$('#eDel').onclick=async()=>{
+  if(!await confirmBox('ลบตัวละครนี้พร้อมประวัติแชททั้งหมด?','ลบ',true))return;
+  state.characters=state.characters.filter(x=>x.id!==editId);await save();goReplace('#');
+};
+
+/* ---------- chat ---------- */
+const cur=()=>state&&state.characters.find(c=>c.id===curId);
+function viewChat(id){
+  const c=state.characters.find(x=>x.id===id);if(!c){goReplace('#');return;}
+  if(curId!==id)msgLimit=100;curId=id;autoStick=true;
+  $('#cAv').innerHTML=avHTML(c);$('#cName').textContent=c.name;$('#chatErr').innerHTML='';
+  show('chat');renderMsgs();
+}
+function stick(){const b=$('#msgs');b.scrollTop=b.scrollHeight;}
+$('#msgs').addEventListener('scroll',()=>{const b=$('#msgs');autoStick=b.scrollHeight-b.scrollTop-b.clientHeight<150;},{passive:true});
+function renderMsgs(){
+  const c=cur();if(!c)return;const box=$('#msgs');box.innerHTML='';
+  const start=Math.max(0,c.messages.length-msgLimit);
+  if(start>0){const b=el('button','btn more','ดูข้อความก่อนหน้า ('+start+')');b.onclick=()=>{msgLimit+=100;autoStick=false;renderMsgs();};box.appendChild(b);}
+  for(let i=start;i<c.messages.length;i++)box.appendChild(msgEl(c,i));
+  if(autoStick)stick();
+}
+function msgEl(c,i){
+  const m=c.messages[i],me=m.role==='user';
+  const S=state.settings,flow=S.layout!=='bubble';
+  const row=el('div','row '+(me?'me':'bot')+(flow?' flow':''));
+  const b=el('div','bubble',render(m.content));
+  const uav=avOK(S.userAvatar)?'<img alt="" src="'+S.userAvatar+'">':'🙂';
+  if(flow){
+    const who=el('div','who');
+    who.appendChild(el('div','av',me?uav:avHTML(c)));
+    who.appendChild(el('span','nm',esc(me?(S.userName||'คุณ'):c.name)));
+    row.appendChild(who);row.appendChild(b);
+  }else{
+    const line=el('div','line');
+    if(!me)line.appendChild(el('div','av',avHTML(c)));
+    line.appendChild(b);
+    if(me&&avOK(S.userAvatar))line.appendChild(el('div','av',uav));
+    row.appendChild(line);
+  }
+  const a=el('div','acts');
+  const add=(t,fn)=>{const x=el('button','mini',t);x.onclick=ev=>{ev.stopPropagation();fn();};a.appendChild(x);};
+  add('คัดลอก',()=>copy(m.content));
+  add('แก้ไข',()=>editMsg(i));
+  add('ลบ',()=>delMsg(i,false));
+  add('ลบตั้งแต่ตรงนี้',()=>delMsg(i,true));
+    row.appendChild(a);
+  if(!me&&i===c.messages.length-1&&i>0&&c.messages[i-1].role==='user')row.appendChild(altBar(m));
+  b.onclick=()=>{const was=row.classList.contains('sel');document.querySelectorAll('.row.sel').forEach(r=>r.classList.remove('sel'));if(!was)row.classList.add('sel');};
+  return row;
+}
+function altBar(m){
+  const bar=el('div','altbar'),n=m.alts?m.alts.length:1,k=m.alts?m.ai:0;
+  if(n>1){
+    const p=el('button','mini','‹'),q=el('button','mini','›'),l=el('span','n',(k+1)+'/'+n);
+    p.disabled=k===0;q.disabled=k===n-1;
+    p.onclick=()=>switchAlt(-1);q.onclick=()=>switchAlt(1);
+    bar.appendChild(p);bar.appendChild(l);bar.appendChild(q);
+  }
+  const r=el('button','mini','↻ ตอบใหม่');r.onclick=regen;bar.appendChild(r);
+  return bar;
+}
+function switchAlt(d){
+  if(streaming)return;const c=cur(),m=c.messages[c.messages.length-1];
+  if(!m||!m.alts)return;const k=m.ai+d;if(k<0||k>=m.alts.length)return;
+  m.ai=k;m.content=m.alts[k];renderMsgs();save();
+}
+async function copy(t){
+  try{await navigator.clipboard.writeText(t);toast('คัดลอกแล้ว');}
+  catch{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();try{document.execCommand('copy');toast('คัดลอกแล้ว');}catch{toast('คัดลอกไม่ได้');}x.remove();}
+}
+async function editMsg(i){
+  if(streaming)return;const c=cur(),m=c.messages[i];
+  const t=await askText('แก้ไขข้อความ',m.content,{rows:8});if(t===null)return;
+  if(!t.trim()){toast('ข้อความว่างไม่ได้');return;}
+  m.content=t;if(m.alts)m.alts[m.ai]=t;renderMsgs();save();
+}
+async function delMsg(i,fromHere){
+  if(streaming)return;const c=cur();
+  if(fromHere){if(!await confirmBox('ลบข้อความนี้และทุกข้อความหลังจากนี้?','ลบ',true))return;c.messages.splice(i);}
+  else c.messages.splice(i,1);
+  $('#chatErr').innerHTML='';renderMsgs();save();
+}
+async function regen(){
+  if(streaming)return;const c=cur(),l=c.messages[c.messages.length-1];
+  if(!l||l.role!=='assistant'||c.messages.length<2)return;
+  await reply(c,true);
+}
+function buildMessages(c,list){
+  const s=state.settings;
+  let sys='คุณกำลังเล่นบทบาทเป็นตัวละครชื่อ "'+c.name+'" ในบทสนทนาแชทต่อเนื่องกับผู้ใช้\n\n[ข้อมูลตัวละคร]\n'+(fill(c.persona,c)||'(ไม่ได้ระบุ ให้สร้างบุคลิกที่เหมาะสมจากชื่อ)');
+  if(c.ref)sys+='\n\n[ข้อมูลอ้างอิงเกี่ยวกับตัวละครและเรื่องราว (ใช้เป็นข้อเท็จจริงประกอบการเล่นบทบาท)]\n'+fill(c.ref,c);
+  if(c.sample)sys+='\n\n[ตัวอย่างน้ำเสียงและบทพูด]\n'+fill(c.sample,c);
+  if(s.userName||s.userDesc||c.userRole)sys+='\n\n[ข้อมูลผู้ใช้ (คนที่คุณกำลังคุยด้วย)]'+(s.userName?'\nชื่อ: '+s.userName:'')+(s.userDesc?'\nบุคลิก/ประวัติ: '+fill(s.userDesc,c):'')+(c.userRole?'\nบทบาท/ความสัมพันธ์กับ '+c.name+': '+fill(c.userRole,c):'');
+  sys+='\n\n[กติกา]\n- อยู่ในบทบาทตลอด พูดในฐานะ '+c.name+' เท่านั้น ห้ามพูดหรือกระทำแทนผู้ใช้\n- '+(s.replyLang==='auto'?'ตอบด้วยภาษาเดียวกับที่ผู้ใช้พิมพ์ (ถ้าผู้ใช้พิมพ์ไทยให้ตอบไทย)':'Always write your replies in '+({en:'English',th:'Thai',ja:'Japanese',ko:'Korean',zh:'Chinese'}[s.replyLang]||'English')+', even if the user writes in another language, unless they explicitly ask you to switch.')+'\n- เขียนท่าทาง สีหน้า น้ำเสียง และความรู้สึกของตัวละครเป็นกิริยาในเครื่องหมาย *ดอกจัน* เช่น *ยิ้มเขินๆ แล้วเบือนหน้าหนี* สลับกับบทพูดปกติ (บทพูดไม่ต้องใส่เครื่องหมายคำพูด)\n- ข้อความของผู้ใช้ที่อยู่ในวงเล็บคู่ ((แบบนี้)) คือคำสั่งนอกบทบาท ให้ทำตามโดยไม่ต้องตอบในฐานะตัวละคร\n- ตอบกระชับเป็นธรรมชาติแบบแชท ยกเว้นผู้ใช้ขอให้ยาว';
+  let h=(list||c.messages).filter(m=>m.content&&m.content.trim()).slice(-Number(s.context||30)).map(m=>({role:m.role,content:m.content}));
+  if(h.length&&h[0].role==='assistant')h.unshift({role:'user',content:'(เริ่มการสนทนา)'});
+  return [{role:'system',content:sys}].concat(h);
+}
+function friendly(st,msg){
+  if(st===401)return 'API key ไม่ถูกต้อง ไปเช็กในตั้งค่า';
+  if(st===402)return 'เครดิต OpenRouter หมด เติมได้ที่ openrouter.ai/credits';
+  if(st===429)return 'ส่งถี่เกินไป รอสักครู่แล้วลองใหม่';
+  if(st===404)return 'ไม่พบโมเดลนี้ ลองเลือกโมเดลใหม่ในตั้งค่า'+(msg?' ('+msg+')':'');
+  return msg||('เชื่อมต่อไม่สำเร็จ'+(st?' (รหัส '+st+')':''));
+}
+async function streamChat(messages,signal,onText){
+  const s=state.settings;
+  const res=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',signal,headers:{'Authorization':'Bearer '+s.apiKey,'Content-Type':'application/json'},
+    body:JSON.stringify({model:s.model,messages,stream:true,temperature:Number(s.temperature),max_tokens:Number(s.maxTokens)})});
+  if(!res.ok){let msg='';try{const j=await res.json();msg=(j.error&&(j.error.message||j.error))||'';}catch{}throw new Error(friendly(res.status,typeof msg==='string'?msg:''));}
+  const rd=res.body.getReader(),td=new TextDecoder();let buf='',full='';
+  for(;;){
+    const {done,value}=await rd.read();if(done)break;
+    buf+=td.decode(value,{stream:true});
+    let i;
+    while((i=buf.indexOf('\n'))>=0){
+      const line=buf.slice(0,i).trim();buf=buf.slice(i+1);
+      if(!line.startsWith('data:'))continue;
+      const d=line.slice(5).trim();if(!d||d==='[DONE]')continue;
+      let j;try{j=JSON.parse(d);}catch{continue;}
+      if(j.error)throw new Error(friendly(0,j.error.message||'เกิดข้อผิดพลาดระหว่างตอบ'));
+      const t=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;
+      if(t){full+=t;onText(full);}
+    }
+  }
+  if(!full.trim())throw new Error('โมเดลไม่ตอบกลับ ลองส่งใหม่หรือเปลี่ยนโมเดล');
+  return full;
+}
+function setBusy(b){const s=$('#cSend');s.textContent=b?'■':'➤';s.classList.toggle('stop',b);}
+function stopStream(){if(streaming)streaming.ctl.abort();}
+async function reply(c,regen){
+  $('#chatErr').innerHTML='';
+  const msgs=buildMessages(c,regen?c.messages.slice(0,-1):c.messages);
+  let m,prev=null;
+  if(regen){
+    m=c.messages[c.messages.length-1];
+    if(!m.alts){m.alts=[m.content];m.ai=0;}
+    prev={alts:m.alts.slice(),ai:m.ai,content:m.content};
+    m.alts.push('');m.ai=m.alts.length-1;m.content='';
+  }else{m={role:'assistant',content:''};c.messages.push(m);}
+  autoStick=true;renderMsgs();setBusy(true);
+  const bubble=$('#msgs').lastElementChild.querySelector('.bubble');bubble.innerHTML='<span class="cursor"></span>';
+  const ctl=new AbortController();streaming={ctl,cid:c.id};
+  let errMsg='';
+  try{await streamChat(msgs,ctl.signal,t=>{m.content=t;bubble.innerHTML=render(t)+'<span class="cursor"></span>';if(autoStick)stick();});}
+  catch(e){if(e&&e.name!=='AbortError')errMsg=(e instanceof TypeError)?'เชื่อมต่ออินเทอร์เน็ตไม่ได้':(e.message||String(e));}
+  streaming=null;setBusy(false);
+  if(regen){
+    if(m.content.trim()){m.alts[m.ai]=m.content;if(m.alts.length>12){m.alts.shift();m.ai--;}}
+    else{m.alts=prev.alts;m.ai=prev.ai;m.content=prev.content;}
+  }else if(!m.content.trim()){const k=c.messages.indexOf(m);if(k>=0)c.messages.splice(k,1);}
+  if(!state)return;
+  if(curId===c.id&&$('#v-chat').classList.contains('on')){
+    renderMsgs();
+    if(errMsg){
+      const last=c.messages[c.messages.length-1];
+      const box=el('div','errbox',esc(errMsg));
+      if(last&&last.role==='user'){const r=el('button','mini','ลองใหม่');r.onclick=()=>reply(c);box.appendChild(el('br'));box.appendChild(r);}
+      $('#chatErr').innerHTML='';$('#chatErr').appendChild(box);
+    }
+  }
+  await save();
+}
+async function send(){
+  if(streaming){stopStream();return;}
+  const ta=$('#ci'),text=ta.value.trim();if(!text)return;
+  const s=state.settings;
+  if(!s.apiKey||!s.model){toast('ไปตั้งค่า API key และเลือกโมเดลก่อน',4000);return;}
+  const c=cur(),lm=c.messages[c.messages.length-1];
+  if(lm&&lm.alts){delete lm.alts;delete lm.ai;}
+  c.messages.push({role:'user',content:text});ta.value='';autosize();
+  autoStick=true;renderMsgs();await save();await reply(c);
+}
+function autosize(){const t=$('#ci');t.style.height='auto';t.style.height=Math.min(t.scrollHeight,140)+'px';}
+$('#ci').addEventListener('input',autosize);
+$('#ci').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(pointer:fine)').matches){e.preventDefault();send();}});
+$('#cSend').onclick=send;
+const EMO=[['😊 ยิ้ม','*ยิ้ม*'],['😆 หัวเราะ','*หัวเราะเบาๆ*'],['😳 เขิน','*หน้าแดง เขินอาย*'],['😢 ร้องไห้','*น้ำตาคลอ*'],['😠 โกรธ','*ขมวดคิ้ว*'],['😲 ตกใจ','*ตกใจ ตาเบิกกว้าง*'],['😔 ถอนหายใจ','*ถอนหายใจ*'],['🤗 กอด','*โอบกอด*'],['🤔 ครุ่นคิด','*ครุ่นคิด*'],['😏 ยิ้มมุมปาก','*ยิ้มมุมปาก*']];
+function insertAt(txt,wrap){
+  const t=$('#ci'),s=t.selectionStart,e=t.selectionEnd,v=t.value;let pos;
+  if(wrap){const sel=v.slice(s,e);t.value=v.slice(0,s)+wrap[0]+sel+wrap[1]+v.slice(e);pos=sel?s+wrap[0].length+sel.length+wrap[1].length:s+wrap[0].length;}
+  else{t.value=v.slice(0,s)+txt+v.slice(e);pos=s+txt.length;}
+  t.focus();try{t.setSelectionRange(pos,pos);}catch{}autosize();
+}
+(function buildTools(){
+  const T=$('#tools');
+  const add=(label,fn)=>{const b=el('button','chip');b.type='button';b.textContent=label;b.addEventListener('mousedown',ev=>ev.preventDefault());b.onclick=fn;T.appendChild(b);};
+  add('✨ *กิริยา*',()=>insertAt('',['*','*']));
+  add('**หนา**',()=>insertAt('',['**','**']));
+  add('(( )) สั่งนอกบท',()=>insertAt('',['((','))']));
+  EMO.forEach(x=>add(x[0],()=>insertAt(x[1]+' ')));
+})();
+function openGuide(){
+  openSheet('<div class="guide"><h3>คู่มือการใช้งาน</h3>'
+  +'<h4>เริ่มคุย</h4><ul><li>แตะตัวละครบนหน้าแรก พิมพ์ข้อความ แล้วกด ➤</li><li>พิมพ์บทพูดตามปกติได้เลย ไม่ต้องใส่เครื่องหมายอะไร</li></ul>'
+  +'<h4>บรรยายกิริยา อารมณ์ ความรู้สึก</h4><ul>'
+  +'<li>ครอบด้วยดอกจัน <code>*ยิ้มเขินๆ แล้วเบือนหน้าหนี*</code> จะแสดงเป็นตัวเอียงสี</li>'
+  +'<li>มีปุ่มลัดเหนือช่องพิมพ์: แตะ ✨ กิริยา แล้วพิมพ์ข้อความข้างใน หรือแตะอารมณ์สำเร็จรูป เช่น 😊 ยิ้ม 😳 เขิน</li>'
+  +'<li>ถ้าเลือก (คลุม) ข้อความไว้ก่อนแล้วแตะ ✨ ข้อความนั้นจะถูกครอบให้เอง</li>'
+  +'<li><code>**ข้อความ**</code> ทำตัวหนาเพื่อเน้น</li>'
+  +'<li><code>((สั่งนอกบท))</code> ใช้สั่งเรื่องราวตรงๆ เช่น ((ข้ามไปเป็นเช้าวันรุ่งขึ้น)) หรือ ((ตอบให้สั้นลง)) ตัวละครจะทำตามโดยไม่ตอบในบทบาท</li>'
+  +'<li>ตัวละครจะบรรยายกิริยาด้วยดอกจันกลับมาเช่นกัน</li></ul>'
+  +'<h4>จัดการข้อความ</h4><ul>'
+  +'<li>แตะที่ข้อความ จะมีปุ่ม คัดลอก / แก้ไข / ลบ / ลบตั้งแต่ตรงนี้</li>'
+  +'<li>ใต้ข้อความล่าสุดของตัวละครมีปุ่ม ↻ ตอบใหม่ และ ‹ › ไล่ดูคำตอบก่อนหน้า (เก็บได้สูงสุด 12 คำตอบ)</li>'
+  +'<li>ถ้าตัวละครพูดแทนคุณหรือหลุดบท ให้แก้ไขข้อความนั้น หรือกด ตอบใหม่</li></ul>'
+  +'<h4>ตั้งค่าตัวละคร</h4><ul>'
+  +'<li>กด ⋯ ในหน้าแชท → แก้ไขตัวละคร ใส่รูป นิสัย ตัวอย่างบทพูด คำทักทาย บทบาทของคุณ และข้อมูลอ้างอิง</li>'
+  +'<li>ข้อมูลอ้างอิงดึงจาก Wikipedia ได้ แต่ยิ่งยาวยิ่งเสียโทเคนทุกข้อความ</li>'
+  +'<li>เขียนนิสัยให้เจาะจง และใส่ตัวอย่างบทพูด 2–3 ประโยค จะได้น้ำเสียงตรงใจ</li></ul>'
+  +'<h4>ตั้งค่าอื่นๆ</h4><ul>'
+  +'<li>⚙️ ตั้งค่า: โปรไฟล์ของฉัน ภาษาที่ตัวละครตอบ รูปแบบข้อความ โมเดล และล็อกอัตโนมัติ</li>'
+  +'<li>สำรองข้อมูลเป็นไฟล์เข้ารหัสไว้เสมอ ลืมรหัสผ่านแล้วกู้ไม่ได้</li></ul>'
+  +'<button class="btn block" id="gClose" type="button">ปิด</button></div>');
+  $('#gClose').onclick=closeSheet;
+}
+$('#hGuide').onclick=openGuide;$('#sGuide').onclick=openGuide;
+$('#cBack').onclick=()=>goReplace('#');
+$('#cMenu').onclick=()=>{
+  openSheet('<div class="menu"><button class="btn" id="m1">✏️ แก้ไขตัวละคร</button><button class="btn" id="m2">🧹 ล้างแชทนี้ (เริ่มใหม่)</button><button class="btn" id="m5">📖 คู่มือการใช้งาน</button><button class="btn" id="m3">🔒 ล็อก</button><button class="btn" id="m4">ปิด</button></div>');
+  $('#m1').onclick=()=>{closeSheet();go('#edit/'+curId);};
+  $('#m2').onclick=async()=>{closeSheet();if(await confirmBox('ล้างประวัติแชทกับตัวละครนี้ทั้งหมด?','ล้างแชท',true)){stopStream();resetChat(cur());autoStick=true;$('#chatErr').innerHTML='';renderMsgs();await save();toast('ล้างแล้ว');}};
+  $('#m3').onclick=()=>{closeSheet();lock();};
+  $('#m4').onclick=closeSheet;
+  $('#m5').onclick=()=>{closeSheet();openGuide();};
+};
+function resetChat(c){c.messages=c.greeting?[{role:'assistant',content:fill(c.greeting,c)}]:[];}
+
+/* ---------- settings ---------- */
+function viewSettings(){
+  const s=state.settings;show('settings');
+  $('#sKey').value=s.apiKey;$('#sModel').value=s.model;$('#sName').value=s.userName;$('#sDesc').value=s.userDesc||'';updSetAv();$('#sLang').value=s.replyLang;$('#sLayout').value=s.layout;
+  $('#sTemp').value=s.temperature;$('#sTempV').textContent=s.temperature;
+  $('#sMax').value=String(s.maxTokens);$('#sCtx').value=String(s.context);$('#sLock').value=String(s.autoLock);
+  $('#sStore').textContent=Math.round((localStorage.getItem(VAULT)||'').length/1024)+' KB จากประมาณ 5,000 KB';
+}
+function bind(id,k,fn){const f=()=>{if(!state)return;state.settings[k]=fn($(id).value);dsave();};$(id).addEventListener('input',f);$(id).addEventListener('change',f);}
+bind('#sKey','apiKey',v=>v.trim());bind('#sModel','model',v=>v.trim());bind('#sName','userName',v=>v.trim());bind('#sDesc','userDesc',v=>v.trim());bind('#sLang','replyLang',v=>v);bind('#sLayout','layout',v=>v);
+bind('#sTemp','temperature',Number);bind('#sMax','maxTokens',Number);bind('#sCtx','context',Number);bind('#sLock','autoLock',Number);
+$('#sTemp').addEventListener('input',()=>{$('#sTempV').textContent=$('#sTemp').value;});
+$('#sBack').onclick=()=>goReplace('#');
+function updSetAv(){const a=state.settings.userAvatar;$('#sAvPrev').innerHTML=avOK(a)?'<img alt="" src="'+a+'">':'🙂';}
+$('#sAvPick').onclick=()=>pickImage(d=>{state.settings.userAvatar=d;updSetAv();save();});
+$('#sAvDel').onclick=()=>{state.settings.userAvatar='';updSetAv();save();};
+$('#sLockNow').onclick=lock;
+
+$('#sTest').onclick=async()=>{
+  const k=state.settings.apiKey;if(!k){toast('ใส่ API key ก่อน');return;}
+  toast('กำลังทดสอบ...',8000);
+  try{
+    const h={headers:{Authorization:'Bearer '+k}};
+    let r=await fetch('https://openrouter.ai/api/v1/key',h);
+    if(r.status===404)r=await fetch('https://openrouter.ai/api/v1/auth/key',h);
+    if(r.status===401){toast('API key ไม่ถูกต้อง',4000);return;}
+    if(!r.ok){toast('ทดสอบไม่ได้ (รหัส '+r.status+') แต่ลองคุยดูได้',4000);return;}
+    const d=((await r.json())||{}).data||{};let t='คีย์ใช้ได้ ✓';
+    if(typeof d.usage==='number')t+=' · ใช้ไปแล้ว $'+d.usage.toFixed(2);
+    if(typeof d.limit_remaining==='number')t+=' · เหลือ $'+d.limit_remaining.toFixed(2);
+    toast(t,5000);
+  }catch{toast('เชื่อมต่อไม่ได้ เช็กอินเทอร์เน็ต',4000);}
+};
+
+$('#sPick').onclick=async()=>{
+  openSheet('<h3>เลือกโมเดล</h3><input id="mq" type="search" placeholder="ค้นหา เช่น claude, gemini, deepseek"><div class="row2"><select id="msort"><option value="price">ถูกสุดก่อน</option><option value="name">เรียงตามชื่อ</option></select><label class="chk"><input type="checkbox" id="mfree">ฟรีเท่านั้น</label></div><p class="hint">ราคาเป็นดอลลาร์ต่อ 1 ล้านโทเคน (เข้า/ออก) · "≈100 ข้อความ" คือประมาณการค่าใช้จ่ายต่อแชท 100 ข้อความ · โมเดลฟรีบางตัวอาจเก็บข้อความไปพัฒนาโมเดล</p><div id="mlist" class="mlist">กำลังโหลดรายการ...</div><button class="btn block" id="mclose">ปิด</button>');
+  $('#mclose').onclick=closeSheet;
+  try{
+    if(!models){
+      const r=await fetch('https://openrouter.ai/api/v1/models');if(!r.ok)throw 0;const j=await r.json();
+      models=(j.data||[]).map(m=>({id:m.id,name:m.name||m.id,pi:parseFloat(m.pricing&&m.pricing.prompt)*1e6,po:parseFloat(m.pricing&&m.pricing.completion)*1e6})).filter(m=>m.pi>=0&&m.po>=0);
+    }
+  }catch{const l=$('#mlist');if(l)l.textContent='โหลดรายการไม่สำเร็จ พิมพ์ชื่อโมเดลเองในช่องตั้งค่าได้';return;}
+  if(!$('#mq'))return;
+  const est=m=>(m.pi*2000+m.po*300)/1e6*100;
+  const fp=n=>n===0?'ฟรี':'$'+(n<1?n.toFixed(2):n.toFixed(1));
+  const draw=()=>{
+    const q=$('#mq').value.trim().toLowerCase(),free=$('#mfree').checked,so=$('#msort').value;
+    let a=models.filter(m=>(!q||m.id.toLowerCase().includes(q)||m.name.toLowerCase().includes(q))&&(!free||(m.pi===0&&m.po===0)));
+    a.sort(so==='name'?(x,y)=>x.name.localeCompare(y.name):(x,y)=>est(x)-est(y));
+    const L=$('#mlist');L.innerHTML='';
+    a.slice(0,60).forEach(m=>{
+      const e=est(m),b=el('button','mi-btn','<div class="a">'+esc(m.name)+'</div><div class="b">'+esc(m.id)+'</div><div class="c">'+fp(m.pi)+' / '+fp(m.po)+' · ≈100 ข้อความ: '+(e===0?'ฟรี':e<0.01?'<$0.01':'$'+e.toFixed(2))+'</div>');
+      b.onclick=()=>{state.settings.model=m.id;$('#sModel').value=m.id;save();closeSheet();toast('เลือกแล้ว: '+m.id);};
+      L.appendChild(b);
+    });
+    if(!a.length)L.textContent='ไม่พบโมเดลที่ตรงกับการค้นหา';
+    else if(a.length>60)L.appendChild(el('p','hint','แสดง 60 จาก '+a.length+' รายการ พิมพ์ค้นหาเพื่อกรอง'));
+  };
+  $('#mq').addEventListener('input',draw);$('#mfree').addEventListener('change',draw);$('#msort').addEventListener('change',draw);draw();
+};
+
+$('#sBackup').onclick=async()=>{
+  await save();const v=localStorage.getItem(VAULT);if(!v)return;
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([v],{type:'application/json'}));
+  a.download='character-chat-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  toast('สร้างไฟล์สำรองแล้ว (เข้ารหัส ต้องใช้รหัสผ่านถึงเปิดได้)',5000);
+};
+$('#sRestore').onclick=()=>$('#sFile').click();
+$('#sFile').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  let v;try{v=JSON.parse(await f.text());if(!v.salt||!v.iv||!v.data)throw 0;}catch{toast('ไฟล์สำรองไม่ถูกต้อง');return;}
+  const pw=await askText('ใส่รหัสผ่านของไฟล์สำรองนี้','',{password:true});if(pw===null)return;
+  try{
+    const s=fromB64(v.salt),it=v.iter||ITER,k=await derive(pw,s,it),st=await openVault(v,k);
+    if(!await confirmBox('แทนที่ข้อมูลปัจจุบันทั้งหมดด้วยไฟล์สำรองนี้? (รหัสผ่านจะเปลี่ยนเป็นรหัสของไฟล์สำรอง)','แทนที่',true))return;
+    salt=s;iter=it;key=k;state=normalize(st);await save();toast('กู้คืนสำเร็จ');goReplace('#');route();
+  }catch{toast('รหัสผ่านผิดหรือไฟล์เสียหาย');}
+};
+$('#sChPw').onclick=async()=>{
+  const old=await askText('ใส่รหัสผ่านปัจจุบัน','',{password:true});if(old===null)return;
+  try{await saveChain;const v=stored();await openVault(v,await derive(old,fromB64(v.salt),v.iter||ITER));}catch{toast('รหัสผ่านปัจจุบันไม่ถูกต้อง');return;}
+  const n1=await askText('ตั้งรหัสผ่านใหม่ (อย่างน้อย 6 ตัว)','',{password:true});if(n1===null)return;
+  if(n1.length<6){toast('รหัสผ่านสั้นเกินไป');return;}
+  const n2=await askText('ยืนยันรหัสผ่านใหม่','',{password:true});if(n2===null)return;
+  if(n1!==n2){toast('รหัสผ่านไม่ตรงกัน');return;}
+  salt=crypto.getRandomValues(new Uint8Array(16));iter=ITER;key=await derive(n1,salt,iter);await save();toast('เปลี่ยนรหัสผ่านแล้ว');
+};
+$('#sClearChats').onclick=async()=>{
+  if(!await confirmBox('ล้างประวัติแชทของทุกตัวละคร? (ตัวละครยังอยู่)','ล้างทั้งหมด',true))return;
+  stopStream();state.characters.forEach(resetChat);await save();toast('ล้างแชททั้งหมดแล้ว');
+};
+$('#sWipe').onclick=async()=>{
+  if(!await confirmBox('ลบข้อมูลทั้งหมดถาวร: ตัวละคร แชท API key และรหัสผ่าน ย้อนกลับไม่ได้','ลบทุกอย่าง',true))return;
+  stopStream();await saveChain;state=null;key=null;salt=null;curId=null;
+  localStorage.removeItem(VAULT);wipeDom();goReplace('#');showLock();
+};
+
+/* ---------- start ---------- */
+showLock();
+})();
+</script>
+</body>
+</html>
